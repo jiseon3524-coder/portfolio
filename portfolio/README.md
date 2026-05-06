@@ -22,7 +22,7 @@
 
 
 # 6. 핵심 기능 (코드로 보여주거나 코드 링크)  
-[PlayerCharacter.cpp 코드 보기](./Code/PlayerCharacter.cpp)
+
 
 # 7. 트러블슈팅 경험 / 자랑하고 싶은 코드  
 
