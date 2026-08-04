@@ -18,76 +18,62 @@ public class PlayerController : MonoBehaviour
     private const int DIR_UP = 1;
     private const int DIR_SIDE = 2;
 
-    //오브젝트가 계속 땅으로 떨어지는걸 막는 rigidbody2D 컴포넌트 타입의 변수 선언 - 변수를 굳이..?
+    //스크립트가 붙은 오브젝트의 컴포넌트를 사용하기 위해 컴포넌트별 변수 선언
     private Rigidbody2D rb;
-
-    //오브젝트가 카메라에 보일 수 있도록 하는 SpriteRenderer 컴포넌트 타입의 변수 선언 - 굳이 변수?
     private SpriteRenderer spriteRenderer;
-
-    //오브젝트의 움직임을 구현할 수 있는 Animator 컴포넌트 타입의 변수 선언 - 변수를 따로 선언한 이유가 뭘까..?
     private Animator animator;
-
-    //2D이기 때문에 2차원 벡터 타입의 플레이어의 입력값 변수를 선언 - 플레이어의 입력에 따라 움직여야 하기 때문에 필요
     private Vector2 moveInput;
-
-    //마지막으로 오브젝트가 마주한 방향 변수를 아래방향으로 설정 - 왠지는 모르겟
     private int lastFacingDir = DIR_DOWN;
-    //마지막으로 오브젝트가 제대로 된 방향으로 갔을 경우 변수를 true로 선언 - 아마 오브젝트가 올바르게 작동하지 못했을때에 대비한게아닐지..?
     private bool lastFacingRight = true;
 
     // [지피티가 써준 주석]사격 중일 때만 값이 들어있고, 아니면 null (이동 방향보다 우선순위 높음) - 이건 대체 뭐임..? 2차원벡터 타입의 머 총쏘는 방향 변수?..
     private Vector2? shootDirectionOverride;
 
-    //정적이고 바꿀 수 없는 FacingDirHash변수를 선언해 애니메이터와 연결..? - 진심 모르겟어
+    // 움직임 방향과 속도를 정적변수로 선언
     private static readonly int FacingDirHash = Animator.StringToHash("FacingDir");
-    //이것도 마찬가지. 걍 변수의 의미를 모르겟어
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private float baseMoveSpeed;
-
     private Vector2 lastFacingVector =  Vector2.down;
 
-    //유니티 픽스드파이프펑션 이거 공부를 안해서 심각하다.. start가 아닌 awake를 통해 다른 스크립트 참조할 수 잇엇고 시작할때 한 번 호출되는 함수이다.
-    //start를 쓰면 게임플레이 중에는 활성화 되지 않지만, awake를 쓰면 활성화된 프리팹? 오브젝트에는 스크립트가 다시 호출된다고 알고있음
+    // 오브젝트가 작동하기 전에 컴포넌트들을 불러오는 Awake함수
     public void Awake()
-    {
+    {    
+        // 해당 오브젝트의 컴포넌트를 변수에 저장
         baseMoveSpeed = moveSpeed;
-        //여기서 rigidbody타입의 변수로 컴포넌트 정보? 가져오기
         rb = GetComponent<Rigidbody2D>();
-        // 마찬가지
         spriteRenderer = GetComponent<SpriteRenderer>();
-        // 마찬가지
         animator = GetComponent<Animator>();
 
-        //rigidbody 컴포넌트에서 z회전을 막기 위해(2d게임이니까) freezeRotation 가능하도록 - 근데 변수를 써야햇나 굳이
+        // rigidbody에서 freezeRotation을 활성화 하고 중력을 없앰 (2D게임)
         rb.freezeRotation = true;
-        //rigidbody 컴포넌트에서 중력크기를 0으로 설정. 이것도 2d게임이므로 중력이 필요 없기 때문에 설정
         rb.gravityScale = 0f;
     }
 
     //매 프레임 호출(계속해서 검사해야하는 것들을 위한것)하는 Update함수
     private void Update()
-    {
+    {    
+        // 일시정지창
         if (PauseMenu.IsPaused)
         {
             return;
         }
 
-        //사용자 입력에서 오른쪽 왼쪽 즉 x축 입력을 1, -1로 방향만 받아서, 거기에 속도를 곱해주는것
+        // 사용자 입력에 따른 오브젝트의 x축, y축 이동을 변수의 저장
         float x = Input.GetAxisRaw("Horizontal");
-
-        //사용자 입력에서 위 아래 즉 y축 입력을 1, -1로 방향만 받아서, 거기에 속도를 곱해주는것
         float y = Input.GetAxisRaw("Vertical");
 
-        // 여기서 1,-1로 방향만 받기 위해 벡터의 정규화를 함 - 근데 new는 뭐고 .은 뭐지..?
+        // 그 변수들을 움직임 입력 변수에 저장
         moveInput = new Vector2(x, y).normalized;
 
-        //오브젝트의 방향과 애니메이션을 계속 새롭게 업데이트? 함 - 이미 Update함수안에 잇는데 왜 이렇게 한거지?
+        // 오브젝트의 방향과 애니메이터 함수를 호출
         UpdateFacingDirection();
         UpdateAnimator();
     }
 
+    // 물리현상 구현하는 FixedUpdate함수
     private void FixedUpdate()
     {
+        // 오브젝트가 어떤 위치에서 어떤 속도로 어디로 이동할건지 구현
         Vector2 nextPosition = rb.position + moveInput * moveSpeed * Time.fixedDeltaTime;
         rb.MovePosition(nextPosition);
     }
