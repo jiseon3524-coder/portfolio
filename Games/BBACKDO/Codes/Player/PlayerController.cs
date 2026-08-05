@@ -1,24 +1,24 @@
 using UnityEngine;
 
-//이 컴포넌트가 없으면 작동못하도록 설정 - 오브젝트가 제대로 작동하기 위해.
+// 이 컴포넌트가 없으면 작동 못하도록 설정 - 오브젝트가 제대로 작동하기 위해.
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Animator))]
 
-//이 스크립트 자체의 클래스
+// 이 스크립트 자체의 클래스
 public class PlayerController : MonoBehaviour
 {
-    //플레이어의 움직임을 조정하는 인스펙터
+    // 플레이어의 움직임을 조정하는 인스펙터
     [Header("움직임")]
     //private이지만 인스펙터에서 조절할 수 있도록 SerializeField사용
     [SerializeField] private float moveSpeed = 5f;
 
-    //앞,뒤,옆 방향을 const상수로 지정하여 변경불가능(고정)하게
+    // 앞,뒤,옆 방향을 const상수로 지정하여 변경불가능(고정)하게
     private const int DIR_DOWN = 0;
     private const int DIR_UP = 1;
     private const int DIR_SIDE = 2;
 
-    //스크립트가 붙은 오브젝트의 컴포넌트를 사용하기 위해 컴포넌트별 변수 선언
+    // 스크립트가 붙은 오브젝트의 컴포넌트를 사용하기 위해 컴포넌트별 변수 선언
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
@@ -26,10 +26,7 @@ public class PlayerController : MonoBehaviour
     private int lastFacingDir = DIR_DOWN;
     private bool lastFacingRight = true;
 
-    // [지피티가 써준 주석]사격 중일 때만 값이 들어있고, 아니면 null (이동 방향보다 우선순위 높음) - 이건 대체 뭐임..? 2차원벡터 타입의 머 총쏘는 방향 변수?..
-    private Vector2? shootDirectionOverride;
-
-    // 움직임 방향과 속도를 정적변수로 선언
+    // 애니메이터 파라미터를 ID로 변환해
     private static readonly int FacingDirHash = Animator.StringToHash("FacingDir");
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private float baseMoveSpeed;
@@ -38,8 +35,10 @@ public class PlayerController : MonoBehaviour
     // 오브젝트가 작동하기 전에 컴포넌트들을 불러오는 Awake함수
     public void Awake()
     {    
-        // 해당 오브젝트의 컴포넌트를 변수에 저장
+        // 기본 이동속도를 저장하여 스탯 적용 오류를 방
         baseMoveSpeed = moveSpeed;
+
+        // 해당 오브젝트의 컴포넌트를 변수에 저장
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
@@ -49,7 +48,7 @@ public class PlayerController : MonoBehaviour
         rb.gravityScale = 0f;
     }
 
-    //매 프레임 호출(계속해서 검사해야하는 것들을 위한것)하는 Update함수
+    // 매 프레임 호출(계속해서 검사해야하는 것들을 위한것)하는 Update함수
     private void Update()
     {    
         // 일시정지창
@@ -78,18 +77,7 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(nextPosition);
     }
 
-    /// <summary>총 스크립트가 발사 중일 때 매 프레임 호출. dir = 캐릭터→마우스 방향</summary>
-    public void SetShootDirection(Vector2 dir)
-    {
-        shootDirectionOverride = dir;
-    }
-
-    /// <summary>발사 멈추면 총 스크립트가 호출</summary>
-    public void ClearShootDirection()
-    {
-        shootDirectionOverride = null;
-    }
-
+    // 사용자 입력에 따라 오브젝트가 바라보고 있는 방향을 저장 ( 이동을 멈춰도 바라보고 있던 방향을 바라보게 하기 위해서 )
     private void UpdateFacingDirection()
     {
         if (moveInput.sqrMagnitude < 0.01f)
@@ -105,9 +93,13 @@ public class PlayerController : MonoBehaviour
         );
     }
 
+    // 오브젝트가 바라보는 방향을 애니메이터가 인식할 수 있는 값으로 바꾸는 함수
     private void ApplyDirection(Vector2 dir)
-    {
-        if (dir.sqrMagnitude < 0.0001f) return;
+    {    
+        // 모름
+        if (dir.sqrMagnitude < 0.0001f) {
+        return;
+        }
 
         if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
         {
@@ -120,6 +112,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // 오브젝트가 바라보는 방향대로 애니메이터가 작동하기 위한 함수
     private void UpdateAnimator()
     {
         bool isMoving = moveInput.sqrMagnitude > 0.01f;
@@ -132,10 +125,13 @@ public class PlayerController : MonoBehaviour
             spriteRenderer.flipX = lastFacingRight;
         }
     }
+
+    // 오브젝트에 아이템 스탯을 적용하는 함수
     public void ApplyItemStats(
     float bonusMoveSpeed
-)
-    {
+    )
+    {    
+        // 일단 오브젝트의 이동속도 스탯만 이 스크립트에서 구현
         moveSpeed =
             Mathf.Max(
                 0f,
@@ -148,10 +144,13 @@ public class PlayerController : MonoBehaviour
         );
     }
 
+    // 오브젝트 현재 이동속도 스탯을 나타내는 함수 ( 스탯창에 필요 )
     public float GetCurrentMoveSpeed()
     {
         return moveSpeed;
     }
+
+    // 오브젝트의 방향을 다른 스크립트( ex/PlayerGun.cs ) 에 전달하기 위한 함수
     public Vector2 GetFacingDirection()
     {
         if (lastFacingVector.sqrMagnitude
