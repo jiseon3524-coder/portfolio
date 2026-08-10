@@ -25,8 +25,8 @@ public class PlayerGun : MonoBehaviour
     [SerializeField] private float baseProjectileSize = 1f;
     [SerializeField] private int baseProjectileCount = 1;
 
-    // 총알이 생성되는 위치
-    [Header("FirePoint 위치")]
+    // 플레이어 기준 총알이 생성되는 위치
+    [Header("총알 생성 위치")]
     [SerializeField] private float firePointDistance = 0.4f;
 
     // 총알이 여러 개인 경우 발사되는 범위
@@ -47,7 +47,7 @@ public class PlayerGun : MonoBehaviour
     private float currentProjectileSize;
     private int currentProjectileCount;
 
-    // PlayerGun의 스탯 변경을 적용
+    // 다른 스크립에서 현재 스탯을 읽을 수 있도록
     public int CurrentDamage => currentDamage;
     public float CurrentFireCooldown => currentFireCooldown;
     public float CurrentProjectileSpeed => currentProjectileSpeed;
@@ -89,7 +89,7 @@ public class PlayerGun : MonoBehaviour
         HandleShoot();
     }
 
-    // 게임 재시작 시에 기본 스탯으로 초기화
+    // 게임 시작(재시작) 시에 기본 스탯으로 초기화
     private void ResetToBaseStats()
     {
         currentDamage =
@@ -170,7 +170,7 @@ public class PlayerGun : MonoBehaviour
         isBoomShot =
             itemStats.boomShot;
 
-        // 총알 종류 갱신 (굳이?)
+        // 총알 종류 갱신
         RefreshBulletType();
 
         Debug.Log(
@@ -205,6 +205,7 @@ public class PlayerGun : MonoBehaviour
             );
         }
 
+        // 총알 종류에 따른 아이콘도 갱신
         if (bulletIcon == null)
         {
             return;
@@ -224,7 +225,7 @@ public class PlayerGun : MonoBehaviour
         bulletIcon.preserveAspect = true;
     }
 
-    // 총을 쏠 수 있는 상태 여부를 변수에 저장
+    // 총을 쏠수 있는 조건인지 아닌지를 변수에 저장
     public void SetCanShoot(
         bool value
     )
@@ -264,7 +265,7 @@ public class PlayerGun : MonoBehaviour
         Fire();
     }
 
-    // 총알이 어떻게 나갈지를 다루는 함수
+    // 총알이 얼마나 어떻게 나갈지를 다루는 함수
     private void Fire()
     {
         if (currentBulletPrefab == null ||
@@ -273,7 +274,7 @@ public class PlayerGun : MonoBehaviour
             return;
         }
 
-        // 총알 갯수, 발사 방향과 범위를 정함
+        // 총알 갯수, 발사 방향을 정함
         Vector2 facingDirection =
             playerController
                 .GetFacingDirection();
@@ -336,7 +337,7 @@ public class PlayerGun : MonoBehaviour
         }
     }
 
-    // 총알 프리팹이 생성될때를 다루는 함수 ( 잘모름 )
+    // 총알 프리팹이 생성될때를 다루는 함수 즉, 총알이 진짜 생성되게 하는 함수
     private bool SpawnBullet(
         Vector2 direction
     )
@@ -377,6 +378,7 @@ public class PlayerGun : MonoBehaviour
             return false;
         }
 
+        // 발사되는 총알의 스탯을 전
         bullet.Init(
             normalizedDirection,
             currentDamage,
