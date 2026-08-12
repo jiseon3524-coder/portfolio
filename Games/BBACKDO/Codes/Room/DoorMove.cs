@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 public class DoorMove : MonoBehaviour
 {
+    // RoomManager 스크립트 연결
     [SerializeField] private RoomManager roomManager;
 
     [Header("현재 방")]
@@ -14,21 +15,24 @@ public class DoorMove : MonoBehaviour
     [SerializeField] private Room targetRoom;
     [SerializeField] private Transform targetSpawnPoint;
 
+    // 타일맵으로 만든 문 오브젝트 연결
     [Header("문 타일맵 (2x2 고정)")]
     [SerializeField] private Tilemap doorTilemap;
     [SerializeField] private BoxCollider2D doorCollider;
     [SerializeField] private float openDelay = 0.3f;
 
+    // 문 열리는 애니메이션
     [Header("열린 문 타일 (닫힌 타일과 같은 순서: 왼아래, 오른아래, 왼위, 오른위)")]
     [SerializeField] private TileBase[] openTiles = new TileBase[4];
 
+    // 보스방 문
     [Header("보스방 진입 경고")]
     [SerializeField] private bool useBossWarning;
     [SerializeField] private BossDoorWarningUI bossWarningUI;
 
-    [SerializeField]
-    private string bossWarningMessage =
-        "살기가 느껴진다…";
+    [SerializeField] private string bossWarningMessage = "살기가 느껴진다…";
+
+    // 문의 픽셀 좌표 읽기 ( 모름 )
     private static readonly Vector3Int[] cellOffsets =
     {
         new Vector3Int(0, 0, 0),
@@ -37,17 +41,21 @@ public class DoorMove : MonoBehaviour
         new Vector3Int(1, 1, 0)
     };
 
+    // 문 픽셀과 타일 객체를 새로 생성? 모르겠어
     private readonly List<Vector3Int> doorCells =
         new List<Vector3Int>();
 
     private readonly TileBase[] originalTiles =
         new TileBase[4];
 
+    // 플레이어가 들어가 있는지랑 움직이고 있는지
     private bool playerInside;
     private bool isMoving;
 
+    // PlayerGun 스크립트 가져오기
     private PlayerGun playerGun;
 
+    // 문의 컴포넌트 가져오고 문 타일 갯수 기억 ( 문에 닿아야만 이동하는 방식이므로 )
     private void Awake()
     {
         if (doorCollider == null)
@@ -59,6 +67,7 @@ public class DoorMove : MonoBehaviour
         CalculateDoorCellsAndRememberOriginal();
     }
 
+    // 문이 타일맵에서 몇 픽셀을 차지하고 있는지 기억
     private void CalculateDoorCellsAndRememberOriginal()
     {
         doorCells.Clear();
@@ -93,6 +102,7 @@ public class DoorMove : MonoBehaviour
         }
     }
 
+    // 문 타일?... 이런 함수가 왤케 많은지 모름
     private void SetDoorTiles(
         TileBase[] tiles
     )
@@ -115,6 +125,7 @@ public class DoorMove : MonoBehaviour
         }
     }
 
+    // 일시정지 상태인지, 플레이어가 안에 있는지, 스페이스바 입력이 들어왔는지 매 프레임 갱신
     private void Update()
     {
         if (PauseMenu.IsPaused)
@@ -138,6 +149,7 @@ public class DoorMove : MonoBehaviour
         TryMoveRoom();
     }
 
+    // 현재 방에서 몬스터가 없어야만 다른 방으로 이동할 수 있도록
     private void TryMoveRoom()
     {
         if (currentRoom == null)
@@ -176,6 +188,7 @@ public class DoorMove : MonoBehaviour
         );
     }
 
+    // 문에서 이동할 때 잠깐 열리는 애니메이션이 나온 후에 이동되는 코루틴 함수
     private IEnumerator MoveRoomRoutine()
     {
         isMoving = true;
@@ -188,16 +201,17 @@ public class DoorMove : MonoBehaviour
         // 문을 열린 모습으로 변경
         SetDoorTiles(openTiles);
 
+        // 문 열릴 때 사운드
         if (SFXManager.Instance != null)
         {
             SFXManager.Instance.PlayDoorOpen();
         }
 
+        // 보스방 문 들어갈 때 경고 문구가 사라질 때 까지 기다리는 코루틴
         if (useBossWarning)
         {
             if (bossWarningUI != null)
             {
-                // 경고 문구가 완전히 사라질 때까지 기다린다.
                 yield return bossWarningUI.ShowWarning(
                     bossWarningMessage
                 );
@@ -222,11 +236,13 @@ public class DoorMove : MonoBehaviour
             );
         }
 
+        // 이동할 방과 그 방에서의 스폰포인트를 찾기
         roomManager.MoveRoom(
             targetRoom,
             targetSpawnPoint
         );
 
+        // 이동할 때도 BGM은 계속 재생
         if (BGMPlayer.Instance != null)
         {
             BGMPlayer.Instance.PlayForRoom(
@@ -240,6 +256,7 @@ public class DoorMove : MonoBehaviour
         // 이전 문의 타일을 닫힌 모습으로 복구
         SetDoorTiles(originalTiles);
 
+        // 이동할 때는 총알 안 가게 (모름)
         if (playerGun != null)
         {
             playerGun.SetCanShoot(true);
@@ -247,6 +264,7 @@ public class DoorMove : MonoBehaviour
         }
     }
 
+    // Player태그가 붙어 있어야만 이동이 가능하고 이동하는 동안엔 총을 못쏘게
     private void OnTriggerEnter2D(
         Collider2D other
     )
@@ -267,6 +285,7 @@ public class DoorMove : MonoBehaviour
         }
     }
 
+    // 나갈 때도 위에와 마찬가지
     private void OnTriggerExit2D(
         Collider2D other
     )
