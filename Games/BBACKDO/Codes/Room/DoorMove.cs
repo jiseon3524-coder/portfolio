@@ -21,7 +21,7 @@ public class DoorMove : MonoBehaviour
     [SerializeField] private BoxCollider2D doorCollider;
     [SerializeField] private float openDelay = 0.3f;
 
-    // 문 열리는 애니메이션
+    // 문 열리는 애니메이션 구현
     [Header("열린 문 타일 (닫힌 타일과 같은 순서: 왼아래, 오른아래, 왼위, 오른위)")]
     [SerializeField] private TileBase[] openTiles = new TileBase[4];
 
@@ -32,7 +32,7 @@ public class DoorMove : MonoBehaviour
 
     [SerializeField] private string bossWarningMessage = "살기가 느껴진다…";
 
-    // 문의 픽셀 좌표 읽기 ( 모름 )
+    // Tilemap에서 문의 cell의 상대좌표 저장
     private static readonly Vector3Int[] cellOffsets =
     {
         new Vector3Int(0, 0, 0),
@@ -41,10 +41,11 @@ public class DoorMove : MonoBehaviour
         new Vector3Int(1, 1, 0)
     };
 
-    // 문 픽셀과 타일 객체를 새로 생성? 모르겠어
+    // ? 모름
     private readonly List<Vector3Int> doorCells =
         new List<Vector3Int>();
 
+    // 열리기 전 기본 문의 타일 저
     private readonly TileBase[] originalTiles =
         new TileBase[4];
 
@@ -55,7 +56,7 @@ public class DoorMove : MonoBehaviour
     // PlayerGun 스크립트 가져오기
     private PlayerGun playerGun;
 
-    // 문의 컴포넌트 가져오고 문 타일 갯수 기억 ( 문에 닿아야만 이동하는 방식이므로 )
+    // 문의 Colider 컴포넌트 가져오고 문 cell의 좌표 기억 ( 문에 닿아야만 이동하는 방식이므로 )
     private void Awake()
     {
         if (doorCollider == null)
@@ -67,7 +68,7 @@ public class DoorMove : MonoBehaviour
         CalculateDoorCellsAndRememberOriginal();
     }
 
-    // 문이 타일맵에서 몇 픽셀을 차지하고 있는지 기억
+    // 문 cell의 위치를 계산하고 열리기 전 기본 cell을 저장.
     private void CalculateDoorCellsAndRememberOriginal()
     {
         doorCells.Clear();
@@ -183,6 +184,7 @@ public class DoorMove : MonoBehaviour
             return;
         }
 
+        // 문이 열리는 동안 잠깐 멈춰있는 Coroutine
         StartCoroutine(
             MoveRoomRoutine()
         );
@@ -236,13 +238,13 @@ public class DoorMove : MonoBehaviour
             );
         }
 
-        // 이동할 방과 그 방에서의 스폰포인트를 찾기
+        // RoomManger스크립트에 이동할 방과 스폰포인트를 전달
         roomManager.MoveRoom(
             targetRoom,
             targetSpawnPoint
         );
 
-        // 이동할 때도 BGM은 계속 재생
+        // 이동할 때 각 방의 BGM을 재생
         if (BGMPlayer.Instance != null)
         {
             BGMPlayer.Instance.PlayForRoom(
@@ -256,7 +258,7 @@ public class DoorMove : MonoBehaviour
         // 이전 문의 타일을 닫힌 모습으로 복구
         SetDoorTiles(originalTiles);
 
-        // 이동할 때는 총알 안 가게 (모름)
+        // 이동이 끝나면 총을 다시 쏠 수 있게
         if (playerGun != null)
         {
             playerGun.SetCanShoot(true);
@@ -264,7 +266,7 @@ public class DoorMove : MonoBehaviour
         }
     }
 
-    // Player태그가 붙어 있어야만 이동이 가능하고 이동하는 동안엔 총을 못쏘게
+    // Player태그가 붙어 있어야만 문의 Trigger가 작동하여 영역에 들어왔음을 인지
     private void OnTriggerEnter2D(
         Collider2D other
     )
@@ -279,6 +281,7 @@ public class DoorMove : MonoBehaviour
         playerGun =
             other.GetComponentInChildren<PlayerGun>();
 
+        // 플레이어가 문의 Trigger영역에 있으면 총 발사 못함
         if (playerGun != null)
         {
             playerGun.SetCanShoot(false);
