@@ -1,13 +1,16 @@
 using System.Collections;
 using UnityEngine;
 
+// 몬스터 랭크 나눔
 public enum MonsterRank
 {
     Normal,
     Boss
 }
 
+// Animator 컴포넌트가 없으면 작동 X
 [RequireComponent(typeof(Animator))]
+
 public class Monster : MonoBehaviour
 {
     [Header("몬스터 기본 설정")]
@@ -16,19 +19,20 @@ public class Monster : MonoBehaviour
     [SerializeField] private int maxHp = 30;
     [SerializeField] private float deathAnimDuration = 0.5f;
 
+    // 몬스터별 아이템 드롭 확률
     [Header("일반 몬스터 드롭")]
-    [SerializeField, Range(0f, 1f)]
-    private float normalDropChance = 0.15f;
+    [SerializeField, Range(0f, 1f)] private float normalDropChance = 0.15f;
 
     [Header("보스 드롭")]
     [SerializeField, Range(2, 3)]
     private int bossDropCount = 2;
 
+    // 몬스터들이 떨구는 아이템 공통 프리팹
     [Header("공통 드롭 프리팹")]
     [SerializeField] private GameObject itemPickupPrefab;
 
+    // 컴포넌트와 스탯을 변수에 저장
     private int currentHp;
-
     private RoomBattle roomBattle;
     private Animator animator;
     private MonsterAI monsterAI;
@@ -38,10 +42,12 @@ public class Monster : MonoBehaviour
 
     private bool isDead;
 
+    // HP와 생사여부 갱신
     public int CurrentHp => currentHp;
     public int MaxHp => maxHp;
     public bool IsDead => isDead;
 
+    // 몬스터들의 체력 회복 ( 지금은 구현 X )
     public float HealthRate
     {
         get
@@ -55,12 +61,14 @@ public class Monster : MonoBehaviour
         }
     }
 
+    // 트리거에 따른 애니메이터 작동
     private static readonly int HitTriggerHash =
         Animator.StringToHash("Hit");
 
     private static readonly int DeathTriggerHash =
         Animator.StringToHash("Death");
 
+    // 게임 시작 시 현재 체력을 최대로 만들고 컴포넌트들 가져오기.
     private void Awake()
     {
         currentHp = maxHp;
@@ -84,6 +92,7 @@ public class Monster : MonoBehaviour
             GetComponent<DamageFlash>();
     }
 
+    // 몬스터가 피해를 입을 때의 함수
     public void TakeDamage(
         int damage
     )
@@ -112,18 +121,21 @@ public class Monster : MonoBehaviour
             damageFlash.Play();
         }
 
+        // 체력 0이하 되면 죽음
         if (currentHp <= 0)
         {
             Die();
             return;
         }
 
+        // 몬스터 피격 시 효과음
         if (SFXManager.Instance != null)
         {
             SFXManager.Instance
                 .PlayMonsterHit();
         }
 
+        // 피격 당할 때의 애니메이션
         if (animator != null)
         {
             animator.SetTrigger(
@@ -132,6 +144,7 @@ public class Monster : MonoBehaviour
         }
     }
 
+    // 몬스터가 죽을 때 함수
     private void Die()
     {
         if (isDead)
@@ -145,14 +158,17 @@ public class Monster : MonoBehaviour
             $"{monsterName} 사망"
         );
 
+        // 몬스터 죽을 때 효과음
         if (SFXManager.Instance != null)
         {
             SFXManager.Instance
                 .PlayMonsterDeath();
         }
 
+        // 죽은 몬스터 행동 멈추기
         DisableMonsterBehaviour();
 
+        // 죽는 애니메이션
         if (animator != null)
         {
             animator.SetTrigger(
@@ -160,20 +176,25 @@ public class Monster : MonoBehaviour
             );
         }
 
+        // 죽으면서 아이템 드롭 ( 확률에 따라 다름 )
         TryDropItem();
 
+        // 룸배틀 컴포넌트가 붙어있으면 룸배틀에게 몬스터가 죽었다고 전달하기
         if (roomBattle != null)
         {
             roomBattle.OnMonsterDead();
         }
 
+        // 죽었을 때 애니메이션 나올때의 코루틴 적용
         StartCoroutine(
             DestroyAfterAnimation()
         );
     }
 
+    // 몬스터를 비활성화 해서 멈추는 함수
     private void DisableMonsterBehaviour()
     {
+        // 몬스터 스크립트들 비활성화
         if (monsterAI != null)
         {
             monsterAI.enabled = false;
@@ -189,26 +210,32 @@ public class Monster : MonoBehaviour
             boss.enabled = false;
         }
 
+        // Rigidbody 컴포넌트 변수에 저장하기
         Rigidbody2D rb =
             GetComponent<Rigidbody2D>();
 
+        // 변수로 컴포넌트도 비활성화
         if (rb != null)
         {
             rb.linearVelocity =
                 Vector2.zero;
         }
 
+        // 몬스터 오브젝트의 자식 오브젝트들의 Colider까지 변수에 저장
         Collider2D[] colliders =
             GetComponentsInChildren<Collider2D>();
 
+        // Colider 비활성화
         foreach (Collider2D col in colliders)
         {
             col.enabled = false;
         }
     }
 
+    // 아이템 떨구는 함수
     private void TryDropItem()
     {
+        // ItemManger 컴포넌트가 없을 경우 오류 문자 출력
         if (ItemManager.Instance == null)
         {
             Debug.LogWarning(
@@ -218,6 +245,7 @@ public class Monster : MonoBehaviour
             return;
         }
 
+        // 아이템 기본프리팹이 연결되어 있지 않아도 오류 문자 출력
         if (itemPickupPrefab == null)
         {
             Debug.LogWarning(
@@ -227,16 +255,20 @@ public class Monster : MonoBehaviour
             return;
         }
 
+        // Room오브젝트의 최상위 컴포넌트를 변수에 저장 
         Room room =
             GetComponentInParent<Room>();
 
+        // 저장한 변수로 스테이지 번호 저장
         int stage =
             room != null
                 ? room.StageIndex
                 : 0;
 
+        // 몬스터 랭크에 따른 경우 분리
         switch (monsterRank)
         {
+            // 일반 몬스터 경우
             case MonsterRank.Normal:
 
                 ItemManager.Instance
@@ -249,6 +281,7 @@ public class Monster : MonoBehaviour
 
                 break;
 
+            // 보스 몬스터 경우
             case MonsterRank.Boss:
 
                 ItemManager.Instance
@@ -263,12 +296,14 @@ public class Monster : MonoBehaviour
         }
     }
 
+    // 몬스터 죽었을 때 잠깐 멈춰서 죽는 애니메이션 나오게 하고 다시 재게되게 하는 코루틴 함수
     private IEnumerator DestroyAfterAnimation()
     {
         yield return new WaitForSeconds(
             deathAnimDuration
         );
 
+        // 몇 초 기다리고 몬스터 오브젝트 파괴
         Destroy(gameObject);
     }
 }
