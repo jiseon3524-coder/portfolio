@@ -8,7 +8,7 @@ public enum MonsterRank
     Boss
 }
 
-// Animator 컴포넌트가 없으면 작동 X
+// Animator 컴포넌트가 없으면 불러오기
 [RequireComponent(typeof(Animator))]
 
 public class Monster : MonoBehaviour
@@ -42,12 +42,12 @@ public class Monster : MonoBehaviour
 
     private bool isDead;
 
-    // HP와 생사여부 갱신
+    // 다른 스크립트에서 HP와 죽음 여부를 읽을 수 있게
     public int CurrentHp => currentHp;
     public int MaxHp => maxHp;
     public bool IsDead => isDead;
 
-    // 몬스터들의 체력 회복 ( 지금은 구현 X )
+    // 몬스터들의 체력 비율 ( 현재 체력이 몇 퍼센트 남았는지 등 )
     public float HealthRate
     {
         get
@@ -61,7 +61,7 @@ public class Monster : MonoBehaviour
         }
     }
 
-    // 트리거에 따른 애니메이터 작동
+    // 애니메이터 트리거를 해쉬 처리 - 애니메이터에서 정수값으로 트리거를 사용하기 위해
     private static readonly int HitTriggerHash =
         Animator.StringToHash("Hit");
 
@@ -214,18 +214,18 @@ public class Monster : MonoBehaviour
         Rigidbody2D rb =
             GetComponent<Rigidbody2D>();
 
-        // 변수로 컴포넌트도 비활성화
+        // Rigidbody 속도를 0으로 해놓기
         if (rb != null)
         {
             rb.linearVelocity =
                 Vector2.zero;
         }
 
-        // 몬스터 오브젝트의 자식 오브젝트들의 Colider까지 변수에 저장
+        // 몬스터 오브젝트의 자식 오브젝트들의 Collider까지 변수에 저장
         Collider2D[] colliders =
             GetComponentsInChildren<Collider2D>();
 
-        // Colider 비활성화
+        // Collider 비활성화
         foreach (Collider2D col in colliders)
         {
             col.enabled = false;
@@ -235,7 +235,7 @@ public class Monster : MonoBehaviour
     // 아이템 떨구는 함수
     private void TryDropItem()
     {
-        // ItemManger 컴포넌트가 없을 경우 오류 문자 출력
+        // ItemManger 컴포넌트가 없을 경우 콘솔 로그 출력
         if (ItemManager.Instance == null)
         {
             Debug.LogWarning(
@@ -245,7 +245,7 @@ public class Monster : MonoBehaviour
             return;
         }
 
-        // 아이템 기본프리팹이 연결되어 있지 않아도 오류 문자 출력
+        // 아이템 기본프리팹이 연결되어 있지 않아도 콘솔 로그 출력
         if (itemPickupPrefab == null)
         {
             Debug.LogWarning(
@@ -255,7 +255,7 @@ public class Monster : MonoBehaviour
             return;
         }
 
-        // Room오브젝트의 최상위 컴포넌트를 변수에 저장 
+        // 해당 오브젝트의 부모 오브젝트에서 제일 먼저 Room 컴포넌트가 발견될 때 가져오기 
         Room room =
             GetComponentInParent<Room>();
 
@@ -296,7 +296,7 @@ public class Monster : MonoBehaviour
         }
     }
 
-    // 몬스터 죽었을 때 잠깐 멈춰서 죽는 애니메이션 나오게 하고 다시 재게되게 하는 코루틴 함수
+    // 몬스터 죽었을 때 죽는 애니메이션이 나온 이후 몬스터가 파괴되기 위한 코루틴 함수
     private IEnumerator DestroyAfterAnimation()
     {
         yield return new WaitForSeconds(
