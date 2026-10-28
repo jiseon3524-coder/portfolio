@@ -10,11 +10,17 @@
 - **희망 직무:** 게임 개발자, 웹 개발자
 
 ## Developed Games  
-### 1. BBACKDO  
-- 장르: 로그라이크, 슈팅
+### 1. BBACKDO(Stage1)
+- 장르: 로그라이크
 - 세계관: 플레이어가 괴도가 되어 더 값진 물건을 훔치기 위해 싸워나감
   
-![게임 플레이 영상](images/BBACKDO.gif)
+![게임 플레이 영상](images/BBACKDO.gif)    
+
+### 2. LuxPio(개발종료)
+- 장르: 어드벤처
+- 세계관: 플레이어가 마법학교에 들어가 모험을 떠남
+  
+![게임 플레이 영상](images/LuxPio.gif)  
 
 ## Portfolio
 
